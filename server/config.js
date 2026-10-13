@@ -143,7 +143,10 @@ const config = Object.freeze({
   ai: Object.freeze({
     provider: (process.env.AI_PROVIDER || 'glm').toLowerCase(),
     model: process.env.AI_MODEL || 'glm-4.7-flash',
-    baseUrl: process.env.AI_BASE_URL || '',
+    // 智谱 GLM 的 OpenAI 兼容端点（.env 里 AI_BASE_URL 可覆盖）
+    baseUrl: (process.env.AI_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4').replace(/\/+$/, ''),
+    timeoutMs: toInt(process.env.AI_TIMEOUT_MS, 30000),
+    maxTokens: toInt(process.env.AI_MAX_TOKENS, 600),
     configured: Boolean(apiKeyResult.value),
     source: apiKeyResult.source || null,
     error: apiKeyResult.error || null,

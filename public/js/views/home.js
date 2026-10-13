@@ -150,6 +150,40 @@ function bodyCard(data) {
   `;
 }
 
+function aiCard() {
+  return `
+    <section class="card">
+      <div class="card-head">
+        <h3 class="card-title">AI 教练建议</h3>
+        <span class="card-hint">大模型生成 · 仅供参考</span>
+      </div>
+      <div id="ai-advice-body">
+        <p class="text-muted">让 AI 根据今天的训练、饮食和体重数据，给你一段个性化建议（需要配置 API Key）。</p>
+        <div class="card-actions" style="margin-top:10px">
+          <button class="btn btn-primary btn-sm" data-action="gen-ai" type="button">生成 AI 建议</button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+/** 把 AI（或降级后的规则）建议渲染进卡片 */
+function renderAdvice(container, advice) {
+  const body = container.querySelector('#ai-advice-body');
+  if (!body) return;
+  const tag = advice.source === 'ai'
+    ? `<span class="chip chip-success">AI 生成${advice.model ? ` · ${escapeHtml(advice.model)}` : ''}</span>`
+    : '<span class="chip chip-muted">规则建议</span>';
+  body.innerHTML = `
+    <p class="text-sm" style="white-space:pre-line">${escapeHtml(advice.text)}</p>
+    ${advice.reason ? `<p class="quote">${escapeHtml(advice.reason)}</p>` : ''}
+    <div class="card-actions" style="margin-top:10px">
+      ${tag}
+      <button class="btn btn-ghost btn-sm" data-action="gen-ai" type="button">重新生成</button>
+    </div>
+  `;
+}
+
 function recoCard(data) {
   const items = data.recommendations.length
     ? data.recommendations.map((r) => `
@@ -209,6 +243,7 @@ function template(data) {
     </section>
 
     <div class="grid">
+      ${aiCard()}
       ${trainingCard(data)}
       ${dietCard(data)}
       ${bodyCard(data)}
@@ -271,6 +306,25 @@ export async function renderHome(container, ctx) {
   container.innerHTML = template(data);
 
   onAction(container, {
+    'gen-ai': async (target) => {
+      const body = container.querySelector('#ai-advice-body');
+      target.disabled = true;
+      if (body) body.innerHTML = '<div class="loading">AI 正在思考…</div>';
+      try {
+        const advice = await api.post('/api/today/ai-advice', { date: ctx.date });
+        renderAdvice(container, advice);
+      } catch (err) {
+        // 网络/服务异常：恢复初始状态并提示，不阻塞其他功能
+        if (body) {
+          body.innerHTML = `
+            <p class="quote">生成失败：${escapeHtml(err.message)}</p>
+            <div class="card-actions" style="margin-top:10px">
+              <button class="btn btn-primary btn-sm" data-action="gen-ai" type="button">重试</button>
+            </div>
+          `;
+        }
+      }
+    },
     'quick-log': async (target) => {
       const status = target.dataset.status;
       try {

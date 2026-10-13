@@ -301,3 +301,13 @@ test('静态首页可访问', async () => {
   const text = await res.text();
   assert.ok(text.includes('今日行动中心'));
 });
+
+test('AI 建议接口：未配置密钥时降级为规则建议（200 不报错）', async () => {
+  const res = await post('/api/today/ai-advice', {});
+  assert.equal(res.status, 200);
+  assert.equal(res.body.source, 'rule');
+  assert.ok(typeof res.body.text === 'string' && res.body.text.length > 0);
+  assert.ok(res.body.reason);
+  // 降级响应里绝不出现密钥相关内容
+  assert.ok(!JSON.stringify(res.body).match(/sk-[a-zA-Z0-9]/));
+});

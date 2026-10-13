@@ -126,3 +126,51 @@
   - 云端与本地是两份独立 SQLite 数据库，数据不互通；云端库随重新发布会重置为上传时的内容。
   - 线上版本同样没有登录鉴权，链接等于公开访问，不要放进含隐私数据的场景。
 - Next step: 在手机 WorkBuddy 中打开分享链接体验；确认是否需要把本地数据导出后导入线上（当前线上为种子数据）。
+
+---
+
+### 2026-10-13（第五部分）— 源码上传 GitHub（求职作品集）
+- Goal: 把项目源码传到 GitHub 公开仓库，作为求职作品集；运行环境继续用已上线的云应用（GitHub Pages 无法运行 Express+SQLite，已向用户说明）。
+- Files changed:
+  - `.gitignore`：补齐 `.workbuddy/`、`.wbapp_*.genie`、`logs/`、`tmp/`；screenshots 改为白名单模式（`screenshots/*` + 3 行 `!` 例外，只放行 README 展示用的 3 张）。
+  - `README.md`：新增在线体验链接块与 3 张运行截图（移动端/桌面浅色/桌面深色）。
+  - 新增提交 `b6a4345`（76 文件 / 9606 行，首个完整版本）与 `008f397`（README 截图）。
+- Commands actually run:
+  - `git init -b main` → `git add -A` → 核对暂存清单（确认 .env/data/node_modules/.workbuddy 均被忽略，逐一 check-ignore 验证）→ commit
+  - 关联 origin `https://github.com/AAAKLin/-.git`；沙箱内 git 访问 GitHub 报 CONNECT tunnel failed 502（代理限制），推送由用户在宿主机 PowerShell 执行
+  - 用户执行 `git push -u origin main --force` 成功；GitHub API 复核：根目录 11 项（docs/public/scripts/server/tests + 配置文件），README 正常渲染
+- Tests and results: 推送前 57 项测试 + 8 项冒烟全部通过；推送后经 GitHub API 实际验证文件完整。
+- 排障记录（重要经验）：
+  - 首次推送预计会失败：建仓时勾选 "Add a README file" 会让远程产生初始提交，本地推送属于非快进被拒。解决：`--force` 覆盖（远程仅空 README，无数据损失）。
+  - 用户曾找不到项目文件夹：`C:\Users\肖坤林\.workbuddy\projects\...` 是 WorkBuddy 内部会话数据目录，与项目无关；项目真身在 `C:\Users\肖坤林\WorkBuddy\健身管理工具`（已用资源管理器帮用户直接弹出窗口）。
+- Known issues:
+  - 沙箱 git 无法直连 GitHub（502），后续推送仍需用户在宿主机终端执行；可先用 curl + GitHub API 验证结果。
+- Next step: 用户执行第二条 push（截图提交 008f397）；GitHub 仓库 About 填 Website=在线 demo 链接；需要公网独立域名时可评估 Render 等平台（需用户同意）。
+
+---
+
+### 2026-10-13（第六部分）— 接入第一个 AI 功能：AI 教练建议（智谱 GLM）
+- Goal: 把项目从"CRUD 应用"升级为"AI 应用"（求职作品集核心项）；同时验证"AI 挂了也不影响使用"的降级设计。
+- Files changed:
+  - `server/lib/aiClient.js`（新增）：OpenAI 兼容协议极简客户端，零第三方依赖（Node 内置 fetch + AbortController 超时）。错误分类为 6 种 code（NOT_CONFIGURED/TIMEOUT/NETWORK/AUTH/RATE_LIMIT/BAD_RESPONSE/SERVER），所有错误信息绝不含密钥原文。
+  - `server/services/aiService.js`（新增）：复用 todayService.snapshot() 聚合数据 → 压缩成紧凑 JSON 载荷（日期/体重趋势/今日训练完成度/饮食达成/两周依从）→ 组装 system+user prompt 调用 GLM。**失败/未配置一律降级为规则建议（resolve 绝不 reject）**，调用方无感知。
+  - `server/routes/today.js`：新增 `POST /api/today/ai-advice`，永远返回 200，body.source 标记 ai/rule 来源。
+  - `server/config.js`：AI 配置补默认值（智谱 baseUrl `https://open.bigmodel.cn/api/paas/v4`、AI_TIMEOUT_MS=30000、AI_MAX_TOKENS=600）。
+  - `public/js/views/home.js`：今日行动中心新增"AI 教练建议"卡片（首个），点击才调用（避免每次刷新烧额度），渲染来源标签（AI 生成/规则建议）+ 失败原因。
+  - `.env.example`、`README.md`：AI 配置与功能说明更新。
+- Decisions/assumptions:
+  - **AI 只做增强不做依赖**：prompt 载荷只含当天汇总数据；未配密钥直接降级不发请求；调用失败降级到规则建议。这是产品第一设计原则的落地。
+  - 选智谱 GLM：用户已有免费额度渠道；OpenAI 兼容协议意味着将来换任何服务商只改 baseUrl/model 两个配置。
+  - 前端"点击生成"而非"自动生成"：免费额度有限，且建议不需要每次刷新都变。
+- Commands actually run:
+  - `node --test tests/unit/aiClient.test.js tests/unit/aiService.test.js` → 17 项通过（mock fetch 覆盖 401/429/500/超时/网络断/坏响应；降级链三路径全测）
+  - `node --test "tests/**/*.test.js"` → **75 项全部通过**（57 旧 + 17 AI 单元 + 1 AI 集成）
+  - 重启服务实测：`GET /api/settings/ai-status` → configured:false 且带 hint；`POST /api/today/ai-advice` → source:"rule" + reason"AI 未配置"，降级链路真实生效
+  - CDP 截图首页 → "AI 教练建议"卡片正常渲染在首位（`screenshots/v3-ai-home.png`）
+- 排障记录：
+  - 首版 AI 单测有两个失败：未配置密钥时 aiService 在 fetch 之前就降级，导致 mock 的 chat 永不被调用。修正：测试用"清 require 缓存 + 注入假密钥"重新加载模块链，分别覆盖未配置/失败/成功三条路径。
+  - aiClient 超时用例原本要等 30s：测试加载前设 `AI_TIMEOUT_MS=300` 压到 300ms。
+- Known issues:
+  - 用户此前设置的"密钥文件路径环境变量"经查不存在（用户级/机器级均无 KEY/API/GLM 相关变量），需要重设；真实 GLM 调用尚未在线上验证过（等用户配好密钥）。
+  - 模型名 `glm-4.7-flash` 来自用户提供信息，若智谱控制台型号不同，改 .env 的 AI_MODEL 即可。
+- Next step: 用户按 README 配置密钥 → 访问 ai-status 确认 configured:true → 在首页点"生成 AI 建议"验证真实调用；通过后把 AI 功能部署上线（重新发布）。
