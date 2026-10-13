@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>健身管理 · 今日行动中心</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <!-- 主题初始化：尽早执行，避免刷新时闪一下白屏 -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', saved ? saved === 'dark' : prefersDark);
+      } catch (e) { /* 隐私模式下 localStorage 不可用，忽略即可 */ }
+    })();
+  </script>
+</head>
+<body>
+  <!-- 图标库：线性风格，一次性定义多处引用，避免 emoji 带来的廉价感 -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </symbol>
+    <symbol id="i-dumbbell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/>
+    </symbol>
+    <symbol id="i-utensils" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/>
+      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Z"/>
+    </symbol>
+    <symbol id="i-trending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+    </symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+    </symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+    </symbol>
+  </svg>
+
+  <div class="app" id="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">F</span>
+        <div>
+          <div class="brand-title">健身管理</div>
+          <div class="brand-sub">个人版 · 本地优先</div>
+        </div>
+      </div>
+      <nav class="side-nav" id="side-nav">
+        <a class="side-link" data-route="home" href="#/home"><svg><use href="#i-home"/></svg>今日</a>
+        <a class="side-link" data-route="training" href="#/training"><svg><use href="#i-dumbbell"/></svg>训练</a>
+        <a class="side-link" data-route="diet" href="#/diet"><svg><use href="#i-utensils"/></svg>饮食</a>
+        <a class="side-link" data-route="progress" href="#/progress"><svg><use href="#i-trending"/></svg>我的进度</a>
+      </nav>
+      <div class="side-foot">
+        <button class="btn btn-outline btn-block" id="btn-settings" type="button">
+          <svg><use href="#i-settings"/></svg>档案与备份
+        </button>
+        <p class="side-note">数据保存在本机数据库，不上传。</p>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div>
+          <h1 class="topbar-title" id="topbar-title">今日行动中心</h1>
+          <p class="topbar-sub" id="topbar-sub">加载中…</p>
+        </div>
+        <div class="topbar-actions">
+          <input class="input input-date" type="date" id="global-date" />
+          <button class="btn btn-ghost btn-icon" id="btn-theme" type="button" title="切换深色 / 浅色">
+            <svg class="theme-icon-light"><use href="#i-sun"/></svg>
+            <svg class="theme-icon-dark"><use href="#i-moon"/></svg>
+          </button>
+          <button class="btn btn-ghost btn-icon" id="btn-settings-top" type="button" title="档案与备份">
+            <svg><use href="#i-settings"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content" id="view">
+        <div class="loading">正在加载…</div>
+      </main>
+    </div>
+
+    <nav class="bottom-nav" id="bottom-nav">
+      <a class="bottom-link" data-route="home" href="#/home"><svg><use href="#i-home"/></svg><span>今日</span></a>
+      <a class="bottom-link" data-route="training" href="#/training"><svg><use href="#i-dumbbell"/></svg><span>训练</span></a>
+      <a class="bottom-link" data-route="diet" href="#/diet"><svg><use href="#i-utensils"/></svg><span>饮食</span></a>
+      <a class="bottom-link" data-route="progress" href="#/progress"><svg><use href="#i-trending"/></svg><span>进度</span></a>
+    </nav>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root"></div>
+
+  <script type="module" src="./js/app.js"></script>
+  <script>
+    // 主题切换（放在最后，确保按钮已经存在）
+    (function () {
+      var btn = document.getElementById('btn-theme');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var isDark = document.documentElement.classList.toggle('dark');
+        try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) { /* 忽略 */ }
+      });
+    })();
+  </script>
+</body>
+</html>

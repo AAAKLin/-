@@ -1,0 +1,22 @@
+{
+  "name": "personal-fitness-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Personal intelligent fitness management system - local-first responsive web app",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "dev": "node --env-file-if-exists=.env --watch server/index.js",
+    "migrate": "node server/db/migrate.js",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "test:unit": "node --test \"tests/unit/*.test.js\"",
+    "test:integration": "node --test \"tests/integration/*.test.js\"",
+    "smoke": "node scripts/smoke.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
