@@ -20,8 +20,11 @@ exports/
 user-data/
 data/
 
-# 本地开发/验证产物，不属于源码
-screenshots/
+# 本地开发/验证产物，不属于源码（README 展示用的 3 张精选截图例外）
+screenshots/*
+!screenshots/shadcn-mobile-home.png
+!screenshots/shadcn-home-light.png
+!screenshots/shadcn-home-dark.png
 logs/
 *.log
 tmp/

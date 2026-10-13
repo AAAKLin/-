@@ -5,6 +5,16 @@ Project stage: 第一版已实现并跑通（后端 + 前端 + 数据持久化 +
 > **在线体验**：https://personal-fitness-manager.app.workbuddy.host/
 > （云端运行，无需安装；演示数据可在「档案与备份」中一键载入）
 
+<p align="center">
+  <img src="screenshots/shadcn-mobile-home.png" width="240" alt="移动端 · 今日行动中心" />&nbsp;&nbsp;<img src="screenshots/shadcn-home-light.png" width="560" alt="桌面端 · 浅色主题" />
+  <br/>
+  <sub>移动端今日行动中心 ｜ 桌面端浅色主题</sub>
+  <br/><br/>
+  <img src="screenshots/shadcn-home-dark.png" width="560" alt="桌面端 · 深色主题" />
+  <br/>
+  <sub>桌面端深色主题</sub>
+</p>
+
 ## Goal
 Build a useful, mobile-first responsive personal fitness web app while learning AI-assisted full-stack development.
 
