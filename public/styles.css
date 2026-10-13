@@ -577,6 +577,10 @@ table.table tbody tr:last-child td { border-bottom: none; }
   position: sticky; top: 0; background: hsl(var(--card)); z-index: 1;
 }
 .modal-head h3 { font-size: 15px; }
+.modal-close {
+  min-width: 36px; min-height: 36px; padding: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
 .modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
 .modal-foot {
   padding: 14px 20px; border-top: 1px solid hsl(var(--border));

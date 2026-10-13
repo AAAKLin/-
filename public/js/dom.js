@@ -56,11 +56,13 @@ export function toast(message, type = 'info') {
 export function openModal({ title, body, footer = '', onMount }) {
   const root = document.getElementById('modal-root');
   root.innerHTML = `
-    <div class="modal-backdrop" data-action="close-modal">
+    <div class="modal-backdrop">
       <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-head">
           <h3>${escapeHtml(title)}</h3>
-          <button class="btn btn-ghost btn-sm" data-action="close-modal" type="button">关闭</button>
+          <button class="btn btn-ghost btn-sm modal-close" data-action="close-modal" type="button" aria-label="关闭">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
         </div>
         <div class="modal-body">${body}</div>
         ${footer ? `<div class="modal-foot">${footer}</div>` : ''}
@@ -68,8 +70,13 @@ export function openModal({ title, body, footer = '', onMount }) {
     </div>
   `;
   const backdrop = root.querySelector('.modal-backdrop');
+  // 关闭入口：点遮罩空白处，或点弹窗内部的关闭按钮（右上角 ✕ / 页脚取消）。
+  // 注意选择器限定在 .modal 内部——遮罩自身也带 close-modal 标记，
+  // 若用 closest('[data-action="close-modal"]') 会误匹配遮罩，导致点任何按钮都关弹窗。
   backdrop.addEventListener('click', (event) => {
-    if (event.target === backdrop) closeModal();
+    if (event.target === backdrop || event.target.closest('.modal [data-action="close-modal"]')) {
+      closeModal();
+    }
   });
   document.addEventListener('keydown', escHandler);
   if (onMount) onMount(root);

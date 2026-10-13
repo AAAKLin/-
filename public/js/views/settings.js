@@ -98,7 +98,7 @@ export async function openSettings({ onChanged } = {}) {
       <select class="select" id="s-budget">${options([['low', '低预算'], ['medium', '中等'], ['high', '不敏感']], p.budgetLevel)}</select>
     </div>
 
-    <div class="section-title">每日目标（${data.targets.source === 'manual' ? '当前：手动设置' : '当前：按档案自动估算'}）</div>
+    <div class="section-title" id="s-targets-title">每日目标（${data.targets.source === 'manual' ? '当前：手动设置' : '当前：按档案自动估算'}）</div>
     <div class="field-row">
       <div class="field"><label for="s-kcal">热量（千卡）</label><input class="input" id="s-kcal" type="number" value="${data.targets.kcal ?? ''}" /></div>
       <div class="field"><label for="s-protein">蛋白质（克）</label><input class="input" id="s-protein" type="number" value="${data.targets.protein ?? ''}" /></div>
@@ -137,26 +137,56 @@ export async function openSettings({ onChanged } = {}) {
     onMount(root) {
       const val = (id) => root.querySelector(id).value;
 
+      // 数字字段预校验：空框、非数字、越界都在前端拦下，给出具体中文提示，
+      // 避免把空值当成 0 发给后端、只换回一句"请求参数校验失败"
+      const problems = [];
+      const numField = (id, label, { min, max, integer = false }) => {
+        const raw = val(id).trim();
+        if (raw === '') {
+          problems.push(`请填写${label}`);
+          return null;
+        }
+        const n = Number(raw);
+        if (!Number.isFinite(n)) {
+          problems.push(`${label}只能是数字`);
+          return null;
+        }
+        if (integer && !Number.isInteger(n)) {
+          problems.push(`${label}必须是整数`);
+          return null;
+        }
+        if (n < min || n > max) {
+          problems.push(`${label}需在 ${min} - ${max} 之间`);
+          return null;
+        }
+        return n;
+      };
+
       root.querySelector('#s-save').addEventListener('click', async () => {
+        problems.length = 0;
         const payload = {
           sex: val('#s-sex'),
-          age: Number(val('#s-age')),
-          heightCm: Number(val('#s-height')),
-          weightKg: Number(val('#s-weight')),
+          age: numField('#s-age', '年龄', { min: 10, max: 100, integer: true }),
+          heightCm: numField('#s-height', '身高', { min: 100, max: 250 }),
+          weightKg: numField('#s-weight', '体重', { min: 30, max: 300 }),
           activityLevel: val('#s-activity'),
           goal: val('#s-goal'),
           experience: val('#s-experience'),
-          availableDays: Number(val('#s-days')),
-          sessionMinutes: Number(val('#s-minutes')),
+          availableDays: numField('#s-days', '每周可训练天数', { min: 1, max: 6, integer: true }),
+          sessionMinutes: numField('#s-minutes', '单次时长', { min: 15, max: 120, integer: true }),
           equipment: val('#s-equipment'),
-          limitations: val('#s-limitations'),
+          limitations: val('#s-limitations').trim(),
           budgetLevel: val('#s-budget'),
-          targetKcal: Number(val('#s-kcal')),
-          targetProtein: Number(val('#s-protein')),
-          targetFat: Number(val('#s-fat')),
-          targetCarb: Number(val('#s-carb')),
+          targetKcal: numField('#s-kcal', '目标热量', { min: 800, max: 6000 }),
+          targetProtein: numField('#s-protein', '目标蛋白质', { min: 20, max: 400 }),
+          targetFat: numField('#s-fat', '目标脂肪', { min: 10, max: 300 }),
+          targetCarb: numField('#s-carb', '目标碳水', { min: 20, max: 800 }),
           targetSource: 'manual',
         };
+        if (problems.length > 0) {
+          toast(problems.join('；'), 'error');
+          return;
+        }
         try {
           await api.put('/api/profile', payload);
           toast('档案已保存', 'success');
@@ -169,9 +199,22 @@ export async function openSettings({ onChanged } = {}) {
 
       root.querySelector('#s-recompute').addEventListener('click', async () => {
         try {
-          await api.post('/api/profile/targets/recompute', {});
-          toast('已按档案重新估算', 'success');
-          closeModal();
+          const res = await api.post('/api/profile/targets/recompute', {});
+          if (res && res.updated === false) {
+            // 档案缺信息时后端不会改数据，把真实原因告诉用户，而不是假报成功
+            toast(res.reason || '档案信息不完整，无法估算目标', 'error');
+            return;
+          }
+          // 成功：在弹窗内原地刷新四个目标输入框和标题，不关闭也能看到新值
+          const t = res && res.targets;
+          if (t) {
+            root.querySelector('#s-kcal').value = t.kcal ?? '';
+            root.querySelector('#s-protein').value = t.protein ?? '';
+            root.querySelector('#s-fat').value = t.fat ?? '';
+            root.querySelector('#s-carb').value = t.carb ?? '';
+          }
+          root.querySelector('#s-targets-title').textContent = '每日目标（当前：按档案自动估算）';
+          toast('已按档案重新估算，目标值已更新', 'success');
           if (onChanged) onChanged();
         } catch (err) {
           toast(err.message, 'error');
