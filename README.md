@@ -27,9 +27,9 @@ npm start       # 启动服务，默认 http://127.0.0.1:3100
 
 其他命令：
 ```bash
-npm run test            # 57 项测试（单元 + 集成）
-npm run test:unit       # 仅单元测试（38 项）
-npm run test:integration# 仅集成测试（19 项）
+npm run test            # 75 项测试（单元 + 集成）
+npm run test:unit       # 仅单元测试（55 项）
+npm run test:integration# 仅集成测试（20 项）
 npm run smoke           # 服务启动后另开终端执行，检查关键接口（8 项）
 ```
 
@@ -61,6 +61,26 @@ npm run smoke           # 服务启动后另开终端执行，检查关键接口
 > ⚠️ 安全提醒：开启后，同一个 WiFi 下的任何人都能打开这个应用（当前版本没有登录密码）。
 > 在公司、学校、咖啡厅等公共网络，请把 `.env` 里的 `HOST` 改回 `127.0.0.1` 并重启。
 
+## 部署到 Render（可选）
+
+仓库根目录已带 `render.yaml`（Render Blueprint），连接 GitHub 后 Render 会自动完成全部配置。
+
+> **⚠️ 数据持久性（部署前必读）**：Render **免费档没有持久磁盘**——服务重启、休眠唤醒或重新部署后，`data/fitness.db` 会被清空并恢复为全新演示数据。
+> - 免费档适合：**演示、面试展示、短期体验**
+> - 要每天记录真实数据：需要 Render 付费 Starter（$7/月）+ 1GB 持久磁盘（$0.25/月，取消 `render.yaml` 中 `disk` 段注释并改 `plan: starter`），或继续使用当前云端 / 阿里云轻量服务器
+
+**部署步骤**（约 5 分钟，全程在网页上点）：
+
+1. 登录 [render.com](https://render.com) → 右上角 **New +** → **Blueprint**
+2. 授权 Render 读取你的 GitHub，选择本仓库（`AAAKLin/-`），Branch 选 `main`
+3. Render 读取 `render.yaml` 自动填好配置（Node 22、构建/启动命令、健康检查、新加坡区域），点 **Apply**
+4. 等 2-3 分钟构建完成，获得 `https://xxx.onrender.com` 网址
+5. 免费档 15 分钟无访问会休眠，下次打开需等约 50 秒（冷启动）
+
+**数据不会自动迁移**：Render 上是全新数据库。如需带走旧数据，在旧环境「档案与备份 → 导出备份（JSON）」，再到新环境「选择备份文件恢复」。
+
+**AI 功能**（可选）：Render 控制台 → 服务 → Environment，添加 `AI_API_KEY`（或按 README 上方「API Key 怎么给程序」的文件方式配置），密钥只存在 Render 环境变量里，不进仓库。
+
 ## 技术栈
 
 **前端**（浏览器里跑的部分）
@@ -78,8 +98,9 @@ npm run smoke           # 服务启动后另开终端执行，检查关键接口
 - 日志：结构化 JSON 日志
 
 **测试**
-- Node 内置 `node:test`：38 项单元测试 + 19 项集成测试
+- Node 内置 `node:test`：55 项单元测试 + 20 项集成测试
 - `scripts/smoke.js`：服务启动后的接口冒烟检查（8 项）
+- `scripts/verify-ui.cjs`：CDP 无头浏览器 UI 回归（11 项点击断言，需先启动服务与 Chrome）
 
 **为什么不用 shadcn/ui 官方版？**
 官方版需要 React + Tailwind + Vite 构建工具，会把项目从「改完刷新就能看」变成「每次都要打包」。

@@ -1,0 +1,36 @@
+# Render Blueprint —— 连接 GitHub 仓库后按此配置自动创建服务
+# 文档：https://render.com/docs/blueprint-spec
+#
+# ⚠️ 数据持久性说明（部署前必读）：
+#   免费档（free）没有持久磁盘，服务重启 / 休眠唤醒 / 重新部署后，
+#   data/fitness.db 会被清空并恢复为全新演示数据。
+#   免费档适合演示与面试展示；要每天记录真实数据，请改用付费 Starter
+#   并在配置里取消下面 disk 一段的注释（约 $7.25/月）。
+
+services:
+  - type: web
+    name: personal-fitness-manager
+    runtime: node
+    plan: free
+    region: singapore          # 离国内最近的区域，延迟最低
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true           # GitHub 每次推送自动重新部署
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # 项目需要 Node >= 22.5（用了内置 node:sqlite），必须显式指定大版本
+      - key: NODE_VERSION
+        value: "22"
+      # AI 功能（可选）：在 Render 控制台 Environment 里补，切勿把密钥提交进仓库
+      # - key: AI_API_KEY
+      #   sync: false
+
+    # —— 仅付费 Starter 计划需要：取消下面两行注释以启用持久磁盘 ——
+    # plan: starter
+    # disk:
+    #   name: fitness-data
+    #   mountPath: /data
+    #   sizeGB: 1
